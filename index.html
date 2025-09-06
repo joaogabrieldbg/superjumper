@@ -110,8 +110,232 @@
             ],
             spikes: [ { x: 400, y: 0, from: 'ceiling', dir: 'down' }, { x: 440, y: 0, from: 'ceiling', dir: 'down' } ]
         },
-        // ... (restante dos níveis omitido para abreviar)
+        { // Nível 2
+            startPos: { x: 80, y: 500 },
+            goal: { x: 720, y: 100, width: 40, height: 80 },
+            key: { x: 350, y: 500 },
+            life: { x: 700, y: 550 },
+            platforms: [
+                { x: 50, y: 580, width: 200, height: 20, speedY: 0, speedX: 0 },
+                { x: 300, y: 580, width: 100, height: 20, speedY: -0.35, speedX: 0, bounds: { top: 450, bottom: 580 } },
+                { x: 450, y: 450, width: 100, height: 20, speedY: -0.45, speedX: 0, bounds: { top: 350, bottom: 450 } },
+                { x: 200, y: 350, width: 100, height: 20, speedY: -0.4, speedX: 0, bounds: { top: 250, bottom: 350 } },
+                { x: 500, y: 200, width: 250, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [
+                { x: 130, y: 540, dir: 'up' },
+                { x: 600, y: 0, from: 'ceiling', dir: 'down' }, { x: 640, y: 0, from: 'ceiling', dir: 'down' }, { x: 680, y: 0, from: 'ceiling', dir: 'down' },
+                { x: 605, y: 160, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 3
+            startPos: { x: 60, y: 500 },
+            goal: { x: 730, y: 80, width: 40, height: 80 },
+            key: { x: 550, y: 370 },
+            life: { x: 80, y: 550 },
+            platforms: [
+                { x: 20, y: 580, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 200, y: 520, width: 150, height: 20, speedY: 0, speedX: 1, bounds: { left: 200, right: 400 } },
+                { x: 500, y: 400, width: 100, height: 20, speedY: -0.5, speedX: 0, bounds: { top: 350, bottom: 450 } },
+                { x: 250, y: 300, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 450, y: 200, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 680, y: 160, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ 
+                { x: 300, y: 560, dir: 'up' }, { x: 340, y: 560, dir: 'up' },
+                { x: 255, y: 480, dir: 'up' } // Espinho na maior plataforma
+            ],
+            seagulls: [{ x: -50, y: 250, speed: 2 }]
+        },
+        { // Nível 4
+            startPos: { x: 750, y: 80 },
+            goal: { x: 40, y: 80, width: 40, height: 80 },
+            key: { x: 425, y: 400 },
+            life: { x: 750, y: 130 },
+            platforms: [
+                { x: 675, y: 120, width: 150, height: 20, speedY: 0, speedX: 0 },
+                { x: 450, y: 250, width: 150, height: 20, speedY: 0, speedX: -1.2, bounds: { left: 400, right: 600 } },
+                { x: 200, y: 350, width: 150, height: 20, speedY: 0, speedX: 1.2, bounds: { left: 150, right: 350 } },
+                { x: 400, y: 500, width: 100, height: 20, speedY: 0.6, speedX: 0, bounds: { top: 350, bottom: 500 } },
+                { x: 100, y: 450, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 20, y: 160, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ 
+                { x: 0, y: 560, dir: 'up' }, { x: 40, y: 560, dir: 'up' }, { x: 80, y: 560, dir: 'up' }, { x: 720, y: 560, dir: 'up' }, { x: 760, y: 560, dir: 'up' },
+                { x: 505, y: 210, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 5
+            startPos: { x: 40, y: 500 },
+            goal: { x: 730, y: 80, width: 40, height: 80 },
+            key: { x: 140, y: 170 },
+            life: { x: 40, y: 550 },
+            platforms: [
+                { x: 20, y: 580, width: 80, height: 20, speedY: 0, speedX: 0 },
+                { x: 150, y: 500, width: 80, height: 20, speedY: 0, speedX: 1.8, bounds: { left: 150, right: 400 } },
+                { x: 500, y: 400, width: 80, height: 20, speedY: 0, speedX: -1.8, bounds: { left: 450, right: 650 } },
+                { x: 300, y: 300, width: 80, height: 20, speedY: 0, speedX: 1.8, bounds: { left: 300, right: 550 } },
+                { x: 100, y: 200, width: 80, height: 20, speedY: 0, speedX: 0 },
+                { x: 700, y: 160, width: 80, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ 
+                { x: 200, y: 0, from: 'ceiling', dir: 'down' }, { x: 450, y: 0, from: 'ceiling', dir: 'down' }, { x: 600, y: 0, from: 'ceiling', dir: 'down' },
+                { x: 720, y: 120, dir: 'up' } // Espinho na maior plataforma (última)
+            ],
+            seagulls: [{ x: 850, y: 100, speed: -2.5 }, { x: -50, y: 350, speed: 2.5 }]
+        },
+        { // Nível 6
+            startPos: { x: 380, y: 500 },
+            goal: { x: 380, y: 40, width: 40, height: 80 },
+            key: { x: 575, y: 390 },
+            life: { x: 175, y: 470 },
+            platforms: [
+                { x: 300, y: 580, width: 200, height: 20, speedY: 0, speedX: 0 },
+                { x: 150, y: 500, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 550, y: 420, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 300, y: 340, width: 100, height: 20, speedY: -1, bounds: { top: 250, bottom: 340 } },
+                { x: 100, y: 220, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 400, y: 150, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 350, y: 120, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ 
+                { x: 0, y: 0, from: 'ceiling', dir: 'down' }, { x: 40, y: 0, from: 'ceiling', dir: 'down' }, { x: 720, y: 0, from: 'ceiling', dir: 'down' }, { x: 760, y: 0, from: 'ceiling', dir: 'down' },
+                { x: 380, y: 540, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 7
+            startPos: { x: 40, y: 80 },
+            goal: { x: 730, y: 500, width: 40, height: 80 },
+            key: { x: 700, y: 270 },
+            life: { x: 60, y: 130 },
+            platforms: [
+                { x: 20, y: 160, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 200, y: 250, width: 150, height: 20, speedY: -1, bounds: { top: 200, bottom: 400 } },
+                { x: 450, y: 150, width: 150, height: 20, speedY: 1, bounds: { top: 150, bottom: 350 } },
+                { x: 50, y: 450, width: 100, height: 20, speedY: 0, speedX: 2, bounds: { left: 50, right: 300 } },
+                { x: 680, y: 300, width: 100, height: 20, speedY: 0, speedX: -2, bounds: { left: 500, right: 700 } },
+                { x: 700, y: 580, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [
+                { x: 400, y: 560, dir: 'up' }, { x: 440, y: 560, dir: 'up' }, { x: 480, y: 560, dir: 'up' },
+                { x: 0, y: 300, from: 'ceiling', dir: 'down' }, { x: 760, y: 400, from: 'ceiling', dir: 'down' },
+                { x: 255, y: 210, dir: 'up' } // Espinho na maior plataforma
+            ],
+            seagulls: [{ x: 850, y: 200, speed: -3.5 }]
+        },
+        { // Nível 8
+            startPos: { x: 50, y: 500 },
+            goal: { x: 730, y: 80, width: 40, height: 80 },
+            key: { x: 400, y: 320 },
+            life: { x: 200, y: 220 },
+            platforms: [
+                { x: 20, y: 580, width: 200, height: 20, speedY: 0, speedX: 0 },
+                { x: 300, y: 500, width: 200, height: 20 },
+                { x: 550, y: 400, width: 200, height: 20 },
+                { x: 350, y: 350, width: 100, height: 20 },
+                { x: 150, y: 250, width: 150, height: 20 },
+                { x: 700, y: 160, width: 80, height: 20 },
+            ],
+            spikes: [
+                { x: 300, y: 540, dir: 'up', speedX: 1, bounds: { left: 300, right: 500 } },
+                { x: 380, y: 460, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 9
+            startPos: { x: 750, y: 500 },
+            goal: { x: 50, y: 100, width: 40, height: 80 },
+            key: { x: 400, y: 420 },
+            life: { x: 760, y: 120 },
+            platforms: [
+                { x: 0, y: 580, width: 800, height: 20 },
+                { x: 300, y: 450, width: 200, height: 20 },
+                { x: 600, y: 350, width: 100, height: 20, speedY: 1, bounds: { top: 350, bottom: 450 } },
+                { x: 400, y: 250, width: 100, height: 20 },
+                { x: 200, y: 180, width: 100, height: 20 },
+                { x: 30, y: 180, width: 100, height: 20 },
+            ],
+            spikes: [
+                { x: 100, y: 540, dir: 'up', speedX: 2, bounds: { left: 100, right: 600 } },
+                { x: 600, y: 540, dir: 'up', speedX: -2, bounds: { left: 100, right: 600 } },
+                { x: 380, y: 410, dir: 'up' } // Espinho na segunda maior plataforma
+            ]
+        },
+        { // Nível 10
+            startPos: { x: 400, y: 100 },
+            goal: { x: 400, y: 500, width: 40, height: 80 },
+            key: { x: 750, y: 280 },
+            life: { x: 50, y: 280 },
+            platforms: [
+                { x: 350, y: 150, width: 100, height: 20 },
+                { x: 200, y: 230, width: 100, height: 20 },
+                { x: 500, y: 230, width: 100, height: 20 },
+                { x: 0, y: 310, width: 350, height: 20 },
+                { x: 450, y: 310, width: 350, height: 20 },
+                { x: 100, y: 450, width: 150, height: 20, speedX: 1.5, bounds: { left: 50, right: 250 } },
+                { x: 550, y: 400, width: 150, height: 20, speedX: -1.5, bounds: { left: 500, right: 700 } },
+                { x: 350, y: 580, width: 100, height: 20 },
+            ],
+            spikes: [
+                { x: 100, y: 270, dir: 'up', speedX: 2, bounds: { left: 100, right: 250 } },
+                { x: 600, y: 270, dir: 'up', speedX: -2, bounds: { left: 500, right: 650 } },
+                { x: 155, y: 270, dir: 'up' } // Espinho na maior plataforma
+            ],
+            seagulls: [{ x: -50, y: 380, speed: 3 }]
+        },
+        { // Nível 11
+            startPos: { x: 50, y: 500 },
+            goal: { x: 730, y: 100, width: 40, height: 80 },
+            key: { x: 400, y: 220 },
+            life: { x: 750, y: 550 },
+            platforms: [
+                { x: 20, y: 580, width: 100, height: 20 },
+                { x: 200, y: 450, width: 400, height: 20 },
+                { x: 100, y: 300, width: 600, height: 20 },
+                { x: 350, y: 250, width: 100, height: 20 },
+                { x: 700, y: 180, width: 100, height: 20 },
+            ],
+            spikes: [
+                { x: 120, y: 260, dir: 'up', speedX: 1.5, bounds: { left: 120, right: 350 } }, 
+                { x: 660, y: 260, dir: 'up', speedX: -1.5, bounds: { left: 450, right: 660 } },
+                { x: 200, y: 410, dir: 'up', speedX: 3, bounds: { left: 200, right: 560 } },
+                { x: 100, y: 0, from: 'ceiling', dir: 'down', speedX: 2, bounds: { left: 100, right: 660 } },
+                { x: 380, y: 260, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 12
+            startPos: { x: 400, y: 500 },
+            goal: { x: 400, y: 80, width: 40, height: 80 },
+            key: { x: 750, y: 180 },
+            life: { x: 50, y: 180 },
+            platforms: [
+                { x: 350, y: 580, width: 100, height: 20 },
+                { x: 150, y: 480, width: 100, height: 20, speedY: -1, bounds: { top: 350, bottom: 480 } },
+                { x: 550, y: 350, width: 100, height: 20, speedY: 1, bounds: { top: 350, bottom: 480 } },
+                { x: 0, y: 210, width: 120, height: 20 },
+                { x: 280, y: 210, width: 240, height: 20 },
+                { x: 680, y: 210, width: 120, height: 20 },
+                { x: 350, y: 160, width: 100, height: 20 },
+            ],
+            spikes: [
+                { x: 100, y: 170, dir: 'up', speedX: 4, bounds: { left: 100, right: 300 } },
+                { x: 600, y: 170, dir: 'up', speedX: -4, bounds: { left: 400, right: 600 } },
+                { x: 400, y: 0, from: 'ceiling', dir: 'down' },
+                { x: 380, y: 170, dir: 'up' } // Espinho na maior plataforma
+            ],
+            seagulls: [
+                { x: -50, y: 300, speed: 4 },
+                { x: 850, y: 120, speed: -4 }
+            ]
+        }
     ];
+
+    const menu = {
+        icon: { x: 170, y: 15, width: 40, height: 30 },
+        buttons: {
+            resume: { x: canvas.width / 2 - 150, y: 250, width: 300, height: 50, text: 'Continuar' },
+            restart: { x: canvas.width / 2 - 150, y: 320, width: 300, height: 50, text: 'Reiniciar Nível' }
+        }
+    };
 
     const touchControls = {
         left: { x: 40, y: 470, width: 100, height: 100 },
@@ -480,6 +704,47 @@
         }
     }
 
+    function drawMenuIcon() {
+        const icon = menu.icon;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        const barHeight = 4;
+        const barYMargin = 5;
+        for (let i = 0; i < 3; i++) {
+            ctx.fillRect(icon.x, icon.y + i * (barHeight + barYMargin), icon.width, barHeight);
+        }
+    }
+    
+    function drawMenu() {
+        // Overlay
+        ctx.fillStyle = 'rgba(26, 26, 46, 0.8)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Título
+        ctx.fillStyle = '#e0e0e0';
+        ctx.font = '40px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText('Pausado', canvas.width / 2, 180);
+
+        // Botões
+        Object.values(menu.buttons).forEach(button => {
+            // Sombra
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            drawRoundRect(ctx, button.x + 4, button.y + 4, button.width, button.height, 10);
+            
+            // Botão
+            ctx.fillStyle = '#1687a7';
+            drawRoundRect(ctx, button.x, button.y, button.width, button.height, 10);
+            
+            // Texto do botão
+            ctx.fillStyle = '#e0e0e0';
+            ctx.font = '24px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(button.text, button.x + button.width / 2, button.y + button.height / 2);
+        });
+        ctx.textBaseline = 'alphabetic'; // Reset baseline
+    }
+
     function drawUI() {
         ctx.fillStyle = '#e0e0e0';
         ctx.font = '24px "Press Start 2P"';
@@ -608,7 +873,7 @@
     // --- LÓGICA DO JOGO ---
 
     function update() {
-        if (gameOver || gameWon) return;
+        if (gameOver || gameWon || menuOpen) return;
 
         if (keys.space && jumper.onGround) jumper.isCharging = true;
         
@@ -774,6 +1039,7 @@
     function resetGame() {
         gameOver = false;
         gameWon = false;
+        menuOpen = false;
         jumper.lives = 3;
         level = 1;
         sunY = 150;
@@ -795,9 +1061,16 @@
         drawJumper();
         
         if (!gameOver && !gameWon) {
-            update();
+            if (!menuOpen) {
+                update();
+            }
             drawUI();
-            drawTouchControls();
+            if (!menuOpen) {
+                drawTouchControls();
+            }
+            if (menuOpen) {
+                drawMenu();
+            }
         } else if (gameOver) {
             drawEndScreen('FIM DE JOGO', '#e94560');
         } else if (gameWon) {
@@ -851,47 +1124,59 @@
         }
     }
 
-    function handleTouch(e, isStart) {
+    function handleInteraction(e, isStart) {
         e.preventDefault();
         const rect = canvas.getBoundingClientRect();
-        for (const touch of e.changedTouches) {
+        const touches = e.changedTouches || [e];
+
+        for(const touch of touches){
             const touchX = (touch.clientX - rect.left) * (canvas.width / rect.width);
             const touchY = (touch.clientY - rect.top) * (canvas.height / rect.height);
+            const identifier = touch.identifier ?? 'mouse';
 
             const check = (control) => {
                 return touchX >= control.x && touchX <= control.x + control.width &&
                        touchY >= control.y && touchY <= control.y + control.height;
             };
 
+            // Lógica do Menu
+            if(isStart) {
+                if (menuOpen) {
+                    const resumeBtn = menu.buttons.resume;
+                    if(check(resumeBtn)) { menuOpen = false; return; }
+
+                    const restartBtn = menu.buttons.restart;
+                    if(check(restartBtn)) { loadLevel(level); menuOpen = false; return; }
+                    return;
+                } else if(check(menu.icon)) {
+                    menuOpen = true;
+                    return;
+                }
+            }
+
+            // Lógica dos Controlos de Toque
             if (isStart) {
-                if (check(touchControls.left)) touchMap[touch.identifier] = 'left';
-                else if (check(touchControls.right)) touchMap[touch.identifier] = 'right';
-                else if (check(touchControls.jump)) touchMap[touch.identifier] = 'jump';
+                if (check(touchControls.left)) touchMap[identifier] = 'left';
+                else if (check(touchControls.right)) touchMap[identifier] = 'right';
+                else if (check(touchControls.jump)) touchMap[identifier] = 'jump';
+            } else { 
+                 if (touchMap[identifier] === 'jump') {
+                    if(jumper.isCharging) executeJump();
+                    jumper.isCharging = false;
+                 }
+                 delete touchMap[identifier];
             }
+        }
 
-            const action = isStart ? touchMap[touch.identifier] : null;
-
-            keys.left = false;
-            keys.right = false;
-            if(!isStart && touchMap[touch.identifier] === 'jump') {
-                keys.space = false;
-                if(jumper.isCharging) executeJump();
-                jumper.isCharging = false;
-            } else {
-                 keys.space = false;
-            }
-
-
-            for(const id in touchMap){
-                const control = touchMap[id];
-                if(control === 'left') keys.left = true;
-                if(control === 'right') keys.right = true;
-                if(control === 'jump') keys.space = true;
-            }
-
-            if (!isStart) {
-                delete touchMap[touch.identifier];
-            }
+        keys.left = false;
+        keys.right = false;
+        keys.space = false;
+        
+        for (const id in touchMap) {
+            const control = touchMap[id];
+            if (control === 'left') keys.left = true;
+            if (control === 'right') keys.right = true;
+            if (control === 'jump') keys.space = true;
         }
     }
 
@@ -921,9 +1206,11 @@
     window.addEventListener('resize', resizeCanvas);
     document.addEventListener('keydown', keyDownHandler);
     document.addEventListener('keyup', keyUpHandler);
-    canvas.addEventListener('touchstart', (e) => handleTouch(e, true));
-    canvas.addEventListener('touchend', (e) => handleTouch(e, false));
-    canvas.addEventListener('touchcancel', (e) => handleTouch(e, false));
+    canvas.addEventListener('mousedown', (e) => handleInteraction(e, true));
+    canvas.addEventListener('mouseup', (e) => handleInteraction(e, false));
+    canvas.addEventListener('touchstart', (e) => handleInteraction(e, true));
+    canvas.addEventListener('touchend', (e) => handleInteraction(e, false));
+    canvas.addEventListener('touchcancel', (e) => handleInteraction(e, false));
 
 
     initClouds();
