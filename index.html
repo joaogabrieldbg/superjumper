@@ -1,1 +1,1038 @@
-oi!
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jumper</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1a1a2e;
+            color: #e0e0e0;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+        }
+        canvas {
+            border: 3px solid #0f3460;
+            box-shadow: 0 0 20px rgba(22, 33, 62, 0.8);
+            border-radius: 10px;
+        }
+        #game-container {
+            text-align: center;
+        }
+        #instructions {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #e94560;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="instructions">Use ⬅️ e ➡️ para mover. Pegue a chave e chegue à porta!</div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Estado do jogo
+    let gameOver = false;
+    let gameWon = false;
+    let level = 1;
+
+    // Propriedades do jogador
+    const jumper = {
+        x: 100, y: canvas.height / 2, radius: 20,
+        dx: 0, dy: 0, color: '#2c3e50', lives: 3, // Cor alterada para o pinguim
+        onGround: false, isSquashing: false, squashFactor: 1,
+        isCharging: false, chargePower: 0,
+    };
+
+    // Propriedades do ambiente
+    const gravity = 0.3; 
+    const bounceFactor = 0.8;
+    const horizontalSpeed = 5;
+    let sunY = 150;
+    
+    // Propriedades do Pulo
+    const minJumpForce = -10;
+    const maxChargePower = 25;
+
+    const keys = { right: false, left: false, space: false };
+
+    // Estrutura dos níveis
+    const spikes = [];
+    const platforms = [];
+    const seagulls = [];
+    const particles = []; // Array para as partículas
+    let goal = {};
+    const spikeWidth = 40;
+    const spikeHeight = 40;
+    let levelState = {
+        hasKey: false,
+        lifeCollected: false,
+        keyPos: { x: 0, y: 0 },
+        lifePos: { x: 0, y: 0 }
+    };
+    const clouds = [];
+
+    const levels = [
+        { // Nível 1
+            startPos: { x: 100, y: 500 },
+            goal: { x: 700, y: 100, width: 40, height: 80 },
+            key: { x: 400, y: 450 },
+            life: { x: 500, y: 220 },
+            platforms: [
+                { x: 0, y: 580, width: 250, height: 20, speedY: 0, speedX: 0 },
+                { x: 350, y: 500, width: 200, height: 20, speedY: -0.4, speedX: 0, bounds: { top: 400, bottom: 550 } },
+                { x: 150, y: 350, width: 150, height: 20, speedY: 0, speedX: 0 },
+                { x: 450, y: 250, width: 150, height: 20, speedY: 0, speedX: 0 },
+                { x: 650, y: 180, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ { x: 400, y: 0, from: 'ceiling', dir: 'down' }, { x: 440, y: 0, from: 'ceiling', dir: 'down' } ]
+        },
+        { // Nível 2
+            startPos: { x: 80, y: 500 },
+            goal: { x: 720, y: 100, width: 40, height: 80 },
+            key: { x: 350, y: 500 },
+            life: { x: 700, y: 550 },
+            platforms: [
+                { x: 50, y: 580, width: 200, height: 20, speedY: 0, speedX: 0 },
+                { x: 300, y: 580, width: 100, height: 20, speedY: -0.35, speedX: 0, bounds: { top: 450, bottom: 580 } },
+                { x: 450, y: 450, width: 100, height: 20, speedY: -0.45, speedX: 0, bounds: { top: 350, bottom: 450 } },
+                { x: 200, y: 350, width: 100, height: 20, speedY: -0.4, speedX: 0, bounds: { top: 250, bottom: 350 } },
+                { x: 500, y: 200, width: 250, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [
+                { x: 130, y: 540, dir: 'up' },
+                { x: 600, y: 0, from: 'ceiling', dir: 'down' }, { x: 640, y: 0, from: 'ceiling', dir: 'down' }, { x: 680, y: 0, from: 'ceiling', dir: 'down' },
+                { x: 605, y: 160, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 3
+            startPos: { x: 60, y: 500 },
+            goal: { x: 730, y: 80, width: 40, height: 80 },
+            key: { x: 550, y: 370 },
+            life: { x: 80, y: 550 },
+            platforms: [
+                { x: 20, y: 580, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 200, y: 520, width: 150, height: 20, speedY: 0, speedX: 1, bounds: { left: 200, right: 400 } },
+                { x: 500, y: 400, width: 100, height: 20, speedY: -0.5, speedX: 0, bounds: { top: 350, bottom: 450 } },
+                { x: 250, y: 300, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 450, y: 200, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 680, y: 160, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ 
+                { x: 300, y: 560, dir: 'up' }, { x: 340, y: 560, dir: 'up' },
+                { x: 255, y: 480, dir: 'up' } // Espinho na maior plataforma
+            ],
+            seagulls: [{ x: -50, y: 250, speed: 2 }]
+        },
+        { // Nível 4
+            startPos: { x: 750, y: 80 },
+            goal: { x: 40, y: 80, width: 40, height: 80 },
+            key: { x: 425, y: 400 },
+            life: { x: 750, y: 130 },
+            platforms: [
+                { x: 675, y: 120, width: 150, height: 20, speedY: 0, speedX: 0 },
+                { x: 450, y: 250, width: 150, height: 20, speedY: 0, speedX: -1.2, bounds: { left: 400, right: 600 } },
+                { x: 200, y: 350, width: 150, height: 20, speedY: 0, speedX: 1.2, bounds: { left: 150, right: 350 } },
+                { x: 400, y: 500, width: 100, height: 20, speedY: 0.6, speedX: 0, bounds: { top: 350, bottom: 500 } },
+                { x: 100, y: 450, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 20, y: 160, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ 
+                { x: 0, y: 560, dir: 'up' }, { x: 40, y: 560, dir: 'up' }, { x: 80, y: 560, dir: 'up' }, { x: 720, y: 560, dir: 'up' }, { x: 760, y: 560, dir: 'up' },
+                { x: 505, y: 210, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 5
+            startPos: { x: 40, y: 500 },
+            goal: { x: 730, y: 80, width: 40, height: 80 },
+            key: { x: 140, y: 170 },
+            life: { x: 40, y: 550 },
+            platforms: [
+                { x: 20, y: 580, width: 80, height: 20, speedY: 0, speedX: 0 },
+                { x: 150, y: 500, width: 80, height: 20, speedY: 0, speedX: 1.8, bounds: { left: 150, right: 400 } },
+                { x: 500, y: 400, width: 80, height: 20, speedY: 0, speedX: -1.8, bounds: { left: 450, right: 650 } },
+                { x: 300, y: 300, width: 80, height: 20, speedY: 0, speedX: 1.8, bounds: { left: 300, right: 550 } },
+                { x: 100, y: 200, width: 80, height: 20, speedY: 0, speedX: 0 },
+                { x: 700, y: 160, width: 80, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ 
+                { x: 200, y: 0, from: 'ceiling', dir: 'down' }, { x: 450, y: 0, from: 'ceiling', dir: 'down' }, { x: 600, y: 0, from: 'ceiling', dir: 'down' },
+                { x: 720, y: 120, dir: 'up' } // Espinho na maior plataforma (última)
+            ],
+            seagulls: [{ x: 850, y: 100, speed: -2.5 }, { x: -50, y: 350, speed: 2.5 }]
+        },
+        { // Nível 6
+            startPos: { x: 380, y: 500 },
+            goal: { x: 380, y: 40, width: 40, height: 80 },
+            key: { x: 575, y: 390 },
+            life: { x: 175, y: 470 },
+            platforms: [
+                { x: 300, y: 580, width: 200, height: 20, speedY: 0, speedX: 0 },
+                { x: 150, y: 500, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 550, y: 420, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 300, y: 340, width: 100, height: 20, speedY: -1, bounds: { top: 250, bottom: 340 } },
+                { x: 100, y: 220, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 400, y: 150, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 350, y: 120, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [ 
+                { x: 0, y: 0, from: 'ceiling', dir: 'down' }, { x: 40, y: 0, from: 'ceiling', dir: 'down' }, { x: 720, y: 0, from: 'ceiling', dir: 'down' }, { x: 760, y: 0, from: 'ceiling', dir: 'down' },
+                { x: 380, y: 540, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 7
+            startPos: { x: 40, y: 80 },
+            goal: { x: 730, y: 500, width: 40, height: 80 },
+            key: { x: 700, y: 270 },
+            life: { x: 60, y: 130 },
+            platforms: [
+                { x: 20, y: 160, width: 100, height: 20, speedY: 0, speedX: 0 },
+                { x: 200, y: 250, width: 150, height: 20, speedY: -1, bounds: { top: 200, bottom: 400 } },
+                { x: 450, y: 150, width: 150, height: 20, speedY: 1, bounds: { top: 150, bottom: 350 } },
+                { x: 50, y: 450, width: 100, height: 20, speedY: 0, speedX: 2, bounds: { left: 50, right: 300 } },
+                { x: 680, y: 300, width: 100, height: 20, speedY: 0, speedX: -2, bounds: { left: 500, right: 700 } },
+                { x: 700, y: 580, width: 100, height: 20, speedY: 0, speedX: 0 },
+            ],
+            spikes: [
+                { x: 400, y: 560, dir: 'up' }, { x: 440, y: 560, dir: 'up' }, { x: 480, y: 560, dir: 'up' },
+                { x: 0, y: 300, from: 'ceiling', dir: 'down' }, { x: 760, y: 400, from: 'ceiling', dir: 'down' },
+                { x: 255, y: 210, dir: 'up' } // Espinho na maior plataforma
+            ],
+            seagulls: [{ x: 850, y: 200, speed: -3.5 }]
+        },
+        { // Nível 8
+            startPos: { x: 50, y: 500 },
+            goal: { x: 730, y: 80, width: 40, height: 80 },
+            key: { x: 400, y: 320 },
+            life: { x: 200, y: 220 },
+            platforms: [
+                { x: 20, y: 580, width: 200, height: 20, speedY: 0, speedX: 0 },
+                { x: 300, y: 500, width: 200, height: 20 },
+                { x: 550, y: 400, width: 200, height: 20 },
+                { x: 350, y: 350, width: 100, height: 20 },
+                { x: 150, y: 250, width: 150, height: 20 },
+                { x: 700, y: 160, width: 80, height: 20 },
+            ],
+            spikes: [
+                { x: 300, y: 540, dir: 'up', speedX: 1, bounds: { left: 300, right: 500 } },
+                { x: 380, y: 460, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 9
+            startPos: { x: 750, y: 500 },
+            goal: { x: 50, y: 100, width: 40, height: 80 },
+            key: { x: 400, y: 420 },
+            life: { x: 760, y: 120 },
+            platforms: [
+                { x: 0, y: 580, width: 800, height: 20 },
+                { x: 300, y: 450, width: 200, height: 20 },
+                { x: 600, y: 350, width: 100, height: 20, speedY: 1, bounds: { top: 350, bottom: 450 } },
+                { x: 400, y: 250, width: 100, height: 20 },
+                { x: 200, y: 180, width: 100, height: 20 },
+                { x: 30, y: 180, width: 100, height: 20 },
+            ],
+            spikes: [
+                { x: 100, y: 540, dir: 'up', speedX: 2, bounds: { left: 100, right: 600 } },
+                { x: 600, y: 540, dir: 'up', speedX: -2, bounds: { left: 100, right: 600 } },
+                { x: 380, y: 410, dir: 'up' } // Espinho na segunda maior plataforma
+            ]
+        },
+        { // Nível 10
+            startPos: { x: 400, y: 100 },
+            goal: { x: 400, y: 500, width: 40, height: 80 },
+            key: { x: 750, y: 280 },
+            life: { x: 50, y: 280 },
+            platforms: [
+                { x: 350, y: 150, width: 100, height: 20 },
+                { x: 200, y: 230, width: 100, height: 20 },
+                { x: 500, y: 230, width: 100, height: 20 },
+                { x: 0, y: 310, width: 350, height: 20 },
+                { x: 450, y: 310, width: 350, height: 20 },
+                { x: 100, y: 450, width: 150, height: 20, speedX: 1.5, bounds: { left: 50, right: 250 } },
+                { x: 550, y: 400, width: 150, height: 20, speedX: -1.5, bounds: { left: 500, right: 700 } },
+                { x: 350, y: 580, width: 100, height: 20 },
+            ],
+            spikes: [
+                { x: 100, y: 270, dir: 'up', speedX: 2, bounds: { left: 100, right: 250 } },
+                { x: 600, y: 270, dir: 'up', speedX: -2, bounds: { left: 500, right: 650 } },
+                { x: 155, y: 270, dir: 'up' } // Espinho na maior plataforma
+            ],
+            seagulls: [{ x: -50, y: 380, speed: 3 }]
+        },
+        { // Nível 11
+            startPos: { x: 50, y: 500 },
+            goal: { x: 730, y: 100, width: 40, height: 80 },
+            key: { x: 400, y: 220 },
+            life: { x: 750, y: 550 },
+            platforms: [
+                { x: 20, y: 580, width: 100, height: 20 },
+                { x: 200, y: 450, width: 400, height: 20 },
+                { x: 100, y: 300, width: 600, height: 20 },
+                { x: 350, y: 250, width: 100, height: 20 },
+                { x: 700, y: 180, width: 100, height: 20 },
+            ],
+            spikes: [
+                { x: 120, y: 260, dir: 'up', speedX: 1.5, bounds: { left: 120, right: 350 } }, 
+                { x: 660, y: 260, dir: 'up', speedX: -1.5, bounds: { left: 450, right: 660 } },
+                { x: 200, y: 410, dir: 'up', speedX: 3, bounds: { left: 200, right: 560 } },
+                { x: 100, y: 0, from: 'ceiling', dir: 'down', speedX: 2, bounds: { left: 100, right: 660 } },
+                { x: 380, y: 260, dir: 'up' } // Espinho na maior plataforma
+            ]
+        },
+        { // Nível 12
+            startPos: { x: 400, y: 500 },
+            goal: { x: 400, y: 80, width: 40, height: 80 },
+            key: { x: 750, y: 180 },
+            life: { x: 50, y: 180 },
+            platforms: [
+                { x: 350, y: 580, width: 100, height: 20 },
+                { x: 150, y: 480, width: 100, height: 20, speedY: -1, bounds: { top: 350, bottom: 480 } },
+                { x: 550, y: 350, width: 100, height: 20, speedY: 1, bounds: { top: 350, bottom: 480 } },
+                { x: 0, y: 210, width: 120, height: 20 },
+                { x: 280, y: 210, width: 240, height: 20 },
+                { x: 680, y: 210, width: 120, height: 20 },
+                { x: 350, y: 160, width: 100, height: 20 },
+            ],
+            spikes: [
+                { x: 100, y: 170, dir: 'up', speedX: 4, bounds: { left: 100, right: 300 } },
+                { x: 600, y: 170, dir: 'up', speedX: -4, bounds: { left: 400, right: 600 } },
+                { x: 400, y: 0, from: 'ceiling', dir: 'down' },
+                { x: 380, y: 170, dir: 'up' } // Espinho na maior plataforma
+            ],
+            seagulls: [
+                { x: -50, y: 300, speed: 4 },
+                { x: 850, y: 120, speed: -4 }
+            ]
+        }
+    ];
+
+    function loadLevel(levelNum) {
+        if (levelNum > levels.length) {
+            gameWon = true;
+            return;
+        }
+        const levelData = levels[levelNum - 1];
+        spikes.length = 0;
+        platforms.length = 0;
+        seagulls.length = 0;
+        
+        levelData.spikes.forEach(s => spikes.push({ ...s, width: spikeWidth, height: spikeHeight }));
+        levelData.platforms.forEach(p => platforms.push({ ...p }));
+        if (levelData.seagulls) {
+            levelData.seagulls.forEach(s => seagulls.push({ ...s, width: 50, height: 20 }));
+        }
+        goal = levelData.goal;
+
+        levelState.hasKey = false;
+        levelState.lifeCollected = false;
+        levelState.keyPos = { ...levelData.key };
+        levelState.lifePos = { ...levelData.life };
+        
+        jumper.x = levelData.startPos.x;
+        jumper.y = levelData.startPos.y;
+        jumper.dy = 1;
+    }
+
+    // --- FUNÇÕES DE DESENHO ---
+    
+    function drawRoundRect(ctx, x, y, width, height, radius) {
+        if (width < 2 * radius) radius = width / 2;
+        if (height < 2 * radius) radius = height / 2;
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.arcTo(x + width, y, x + width, y + height, radius);
+        ctx.arcTo(x + width, y + height, x, y + height, radius);
+        ctx.arcTo(x, y + height, x, y, radius);
+        ctx.arcTo(x, y, x + width, y, radius);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    function initClouds() {
+        if (clouds.length > 0) return;
+        for (let i = 0; i < 10; i++) {
+            clouds.push({
+                x: Math.random() * canvas.width,
+                y: 50 + Math.random() * 150,
+                radius: 20 + Math.random() * 20,
+                speed: 0.1 + Math.random() * 0.2
+            });
+        }
+    }
+
+    function drawBackground() {
+        const skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        skyGradient.addColorStop(0, '#0c1445');
+        skyGradient.addColorStop(0.6, '#3b4b95');
+        skyGradient.addColorStop(1, '#7f8eda');
+        ctx.fillStyle = skyGradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#ffcc00';
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, sunY, 50, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.moveTo(0, 350);
+        ctx.lineTo(150, 250);
+        ctx.lineTo(300, 320);
+        ctx.lineTo(500, 200);
+        ctx.lineTo(650, 300);
+        ctx.lineTo(800, 280);
+        ctx.lineTo(800, 600);
+        ctx.lineTo(0, 600);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        clouds.forEach(cloud => {
+            ctx.beginPath();
+            ctx.arc(cloud.x, cloud.y, cloud.radius, 0, Math.PI * 2);
+            ctx.arc(cloud.x + 25, cloud.y + 10, cloud.radius * 0.8, 0, Math.PI * 2);
+            ctx.arc(cloud.x - 20, cloud.y + 15, cloud.radius * 0.9, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+
+        ctx.fillStyle = '#0a0a23';
+        ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+        ctx.fillStyle = '#14143a';
+        ctx.fillRect(0, canvas.height - 40, canvas.width, 40);
+    }
+    
+    function drawPlatforms() {
+        platforms.forEach(p => {
+            const cornerRadius = 10;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            drawRoundRect(ctx, p.x + 3, p.y + 3, p.width, p.height, cornerRadius);
+            ctx.fillStyle = '#1687a7';
+            drawRoundRect(ctx, p.x, p.y, p.width, p.height, cornerRadius);
+        });
+    }
+
+    function drawJumper() {
+        let displayRadiusX = jumper.radius * (2 - jumper.squashFactor);
+        let displayRadiusY = jumper.radius * (jumper.squashFactor);
+
+        const shadowOffset = 3;
+
+        // --- Pés ---
+        const footRadiusX = displayRadiusX * 0.4;
+        const footRadiusY = 6;
+        const footOffsetY = displayRadiusY - footRadiusY / 2;
+        // Sombra Pés
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(jumper.x - displayRadiusX * 0.5 + shadowOffset, jumper.y + footOffsetY + shadowOffset, footRadiusX, footRadiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(jumper.x + displayRadiusX * 0.5 + shadowOffset, jumper.y + footOffsetY + shadowOffset, footRadiusX, footRadiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Pés
+        ctx.fillStyle = '#FFA500'; // Laranja
+        ctx.beginPath();
+        ctx.ellipse(jumper.x - displayRadiusX * 0.5, jumper.y + footOffsetY, footRadiusX, footRadiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(jumper.x + displayRadiusX * 0.5, jumper.y + footOffsetY, footRadiusX, footRadiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+
+        // --- Corpo ---
+        // Sombra Corpo
+        ctx.beginPath();
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.ellipse(jumper.x + shadowOffset, jumper.y + shadowOffset, displayRadiusX, displayRadiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Corpo
+        ctx.beginPath();
+        ctx.fillStyle = jumper.color; // Preto
+        ctx.ellipse(jumper.x, jumper.y, displayRadiusX, displayRadiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- Barriga ---
+        ctx.beginPath();
+        ctx.fillStyle = 'white';
+        ctx.ellipse(jumper.x, jumper.y + displayRadiusY * 0.1, displayRadiusX * 0.7, displayRadiusY * 0.8, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // --- Asas ---
+        const wingRadiusX = displayRadiusX * 0.2;
+        const wingRadiusY = displayRadiusY * 0.6;
+        let wingAngle = 0.5; // Angulo para baixo
+        if (!jumper.onGround) {
+            wingAngle = -0.5; // Angulo para cima ao pular
+        }
+
+        // Asa Esquerda
+        ctx.save();
+        ctx.translate(jumper.x - displayRadiusX * 0.8, jumper.y);
+        ctx.rotate(-wingAngle);
+        ctx.beginPath();
+        ctx.fillStyle = jumper.color;
+        ctx.ellipse(0, 0, wingRadiusX, wingRadiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // Asa Direita
+        ctx.save();
+        ctx.translate(jumper.x + displayRadiusX * 0.8, jumper.y);
+        ctx.rotate(wingAngle);
+        ctx.beginPath();
+        ctx.fillStyle = jumper.color;
+        ctx.ellipse(0, 0, wingRadiusX, wingRadiusY, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+
+        // --- Rosto ---
+        const eyeOffsetY = -displayRadiusY * 0.35;
+
+        if (jumper.isCharging) {
+            // Expressão: Concentrado
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(jumper.x - 10, jumper.y + eyeOffsetY);
+            ctx.lineTo(jumper.x - 4, jumper.y + eyeOffsetY - 1);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(jumper.x + 4, jumper.y + eyeOffsetY - 1);
+            ctx.lineTo(jumper.x + 10, jumper.y + eyeOffsetY);
+            ctx.stroke();
+        } else {
+            // Olhos
+            const eyeRadius = displayRadiusY * 0.15;
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(jumper.x - 7, jumper.y + eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(jumper.x + 7, jumper.y + eyeOffsetY, eyeRadius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pupilas
+            const pupilRadius = eyeRadius * 0.5;
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            ctx.arc(jumper.x - 7, jumper.y + eyeOffsetY, pupilRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(jumper.x + 7, jumper.y + eyeOffsetY, pupilRadius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Bico
+        const beakY = jumper.y - displayRadiusY * 0.1;
+        ctx.fillStyle = '#FFA500';
+        ctx.beginPath();
+        if (!jumper.onGround && !jumper.isCharging) { // Boca aberta ao pular
+            ctx.moveTo(jumper.x, beakY);
+            ctx.lineTo(jumper.x - 5, beakY + 5);
+            ctx.lineTo(jumper.x + 5, beakY + 5);
+        } else { // Boca fechada
+            ctx.moveTo(jumper.x, beakY);
+            ctx.lineTo(jumper.x - 5, beakY + 2);
+            ctx.lineTo(jumper.x + 5, beakY + 2);
+        }
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    function drawGoal() {
+        ctx.fillStyle = levelState.hasKey ? '#8B4513' : '#654321'; 
+        drawRoundRect(ctx, goal.x, goal.y, goal.width, goal.height, 5);
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(goal.x + goal.width - 10 + 3, goal.y + goal.height / 2 + 3, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#FFD700';
+        ctx.beginPath();
+        ctx.arc(goal.x + goal.width - 10, goal.y + goal.height / 2, 5, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawKey() {
+        if (levelState.hasKey) return;
+        const key = levelState.keyPos;
+        const shadowOffset = 3;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.arc(key.x + shadowOffset, key.y - 10 + shadowOffset, 10, 0, Math.PI * 2); 
+        ctx.fillRect(key.x - 2.5 + shadowOffset, key.y + shadowOffset, 5, 20); 
+        ctx.fillRect(key.x - 2.5 + shadowOffset, key.y + 15 + shadowOffset, 10, 5); 
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffcc00';
+        ctx.beginPath();
+        ctx.arc(key.x, key.y - 10, 10, 0, Math.PI * 2);
+        ctx.fillRect(key.x - 2.5, key.y, 5, 20);
+        ctx.fillRect(key.x - 2.5, key.y + 15, 10, 5);
+        ctx.fill();
+    }
+
+    function drawLife() {
+        if (levelState.lifeCollected) return;
+        const life = levelState.lifePos;
+        const x = life.x;
+        const y = life.y;
+        const width = 20;
+        const height = 20;
+        const shadowOffset = 3;
+
+        const drawHeart = (offsetX, offsetY) => {
+            const w = width;
+            const h = height;
+            const top = y - h / 2 + offsetY;
+            const left = x - w / 2 + offsetX;
+
+            ctx.beginPath();
+            ctx.moveTo(left + w / 2, top + h / 4);
+            ctx.quadraticCurveTo(left, top, left, top + h / 2);
+            ctx.quadraticCurveTo(left, top + h, left + w / 2, top + h);
+            ctx.quadraticCurveTo(left + w, top + h, left + w, top + h / 2);
+            ctx.quadraticCurveTo(left + w, top, left + w / 2, top + h / 4);
+            ctx.closePath();
+            ctx.fill();
+        };
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        drawHeart(shadowOffset, shadowOffset);
+
+        ctx.fillStyle = '#2ecc71';
+        drawHeart(0, 0);
+    }
+    
+    function drawSeagulls() {
+        seagulls.forEach(seagull => {
+            const drawWing = (offsetX, offsetY) => {
+                ctx.beginPath();
+                ctx.moveTo(seagull.x + offsetX, seagull.y + offsetY);
+                ctx.quadraticCurveTo(seagull.x + seagull.width / 4 + offsetX, seagull.y - seagull.height + offsetY, seagull.x + seagull.width / 2 + offsetX, seagull.y + offsetY);
+                ctx.moveTo(seagull.x + seagull.width / 2 + offsetX, seagull.y + offsetY);
+                ctx.quadraticCurveTo(seagull.x + (seagull.width * 3 / 4) + offsetX, seagull.y - seagull.height + offsetY, seagull.x + seagull.width + offsetX, seagull.y + offsetY);
+                ctx.stroke();
+            };
+            
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 4;
+            drawWing(3, 3);
+            
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 4;
+            drawWing(0, 0);
+        });
+    }
+
+    function drawSpikes() {
+        spikes.forEach(spike => {
+            let spikeY = (spike.from === 'ceiling') ? 0 : (spike.y || 0);
+            if(spike.platformId !== undefined){
+                const p = platforms[spike.platformId];
+                if(p) spikeY = p.y - spikeHeight;
+            }
+
+            const shadowOffset = 3;
+            
+            const drawSpikeShape = (offsetX, offsetY) => {
+                ctx.beginPath();
+                if (spike.dir === 'up') {
+                    ctx.moveTo(spike.x + offsetX, spikeY + spike.height + offsetY);
+                    ctx.lineTo(spike.x + spike.width / 2 + offsetX, spikeY + offsetY);
+                    ctx.lineTo(spike.x + spike.width + offsetX, spikeY + spike.height + offsetY);
+                } else {
+                    ctx.moveTo(spike.x + offsetX, spikeY + offsetY);
+                    ctx.lineTo(spike.x + spike.width / 2 + offsetX, spikeY + spike.height + offsetY);
+                    ctx.lineTo(spike.x + spike.width + offsetX, spikeY + offsetY);
+                }
+                ctx.closePath();
+                ctx.fill();
+            };
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            drawSpikeShape(shadowOffset, shadowOffset);
+            
+            ctx.fillStyle = '#c0c0c0';
+            drawSpikeShape(0, 0);
+        });
+    }
+
+    function drawParticles() {
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            
+            // Update
+            p.life--;
+            p.opacity -= (p.fadeRate || 0.015);
+            p.x += p.speedX;
+            p.y += p.speedY;
+            
+            if (p.life <= 0 || p.opacity <= 0) {
+                particles.splice(i, 1);
+            } else {
+                // Draw
+                ctx.beginPath();
+                ctx.fillStyle = `rgba(224, 224, 224, ${p.opacity})`;
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    function drawUI() {
+        ctx.fillStyle = '#e0e0e0';
+        ctx.font = '24px "Press Start 2P"';
+        ctx.textAlign = 'left';
+        
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        
+        ctx.fillText(`Vidas: ${jumper.lives}`, 20, 40);
+        ctx.textAlign = 'right';
+        ctx.fillText(`Nível: ${level}`, canvas.width - 20, 40);
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        const keyIconX = canvas.width / 2 - 15;
+        ctx.strokeStyle = '#e0e0e0';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(keyIconX, 25, 8, 0, Math.PI * 2);
+        ctx.moveTo(keyIconX, 33);
+        ctx.lineTo(keyIconX, 45);
+        ctx.moveTo(keyIconX, 42);
+        ctx.lineTo(keyIconX + 5, 42);
+        if (levelState.hasKey) {
+            ctx.fillStyle = '#ffcc00';
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.stroke();
+        }
+
+        if (jumper.isCharging) {
+            const barWidth = 80;
+            const barHeight = 12;
+            const barX = jumper.x - barWidth / 2;
+            const barY = jumper.y - jumper.radius - 35;
+            const chargeWidth = (jumper.chargePower / maxChargePower) * barWidth;
+            const shadowOffset = 2;
+
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(barX + shadowOffset, barY + shadowOffset, barWidth, barHeight);
+
+            ctx.fillStyle = '#333';
+            ctx.fillRect(barX, barY, barWidth, barHeight);
+
+            if (chargeWidth > 0) {
+                const gradient = ctx.createLinearGradient(barX, barY, barX + barWidth, barY);
+                gradient.addColorStop(0, '#2ecc71');
+                gradient.addColorStop(0.5, '#f1c40f');
+                gradient.addColorStop(1, '#e74c3c');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(barX, barY, chargeWidth, barHeight);
+            }
+            
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(barX, barY, barWidth, barHeight);
+        }
+    }
+    
+    function drawEndScreen(message, color) {
+        ctx.fillStyle = 'rgba(26, 26, 46, 0.7)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = color;
+        ctx.font = '50px "Press Start 2P"';
+        ctx.textAlign = 'center';
+        ctx.fillText(message, canvas.width / 2, canvas.height / 2 - 30);
+        ctx.fillStyle = '#e0e0e0';
+        ctx.font = '20px "Press Start 2P"';
+        ctx.fillText('Pressione Enter para reiniciar', canvas.width / 2, canvas.height / 2 + 30);
+    }
+    
+    // --- LÓGICA DO JOGO ---
+
+    function update() {
+        if (gameOver || gameWon) return;
+
+        if (keys.space && jumper.onGround) jumper.isCharging = true;
+        
+        if (keys.right) jumper.dx = horizontalSpeed;
+        else if (keys.left) jumper.dx = -horizontalSpeed;
+        else jumper.dx = 0;
+        
+        let wasOnGround = jumper.onGround;
+
+        // Física Vertical: Aplicar gravidade sempre.
+        jumper.dy += gravity;
+        
+        // Mover jogador
+        jumper.y += jumper.dy;
+        jumper.x += jumper.dx;
+        
+        jumper.onGround = false; // Assumir que está no ar até que a colisão prove o contrário.
+
+        clouds.forEach(cloud => {
+            cloud.x += cloud.speed;
+            if (cloud.x > canvas.width + cloud.radius * 2) cloud.x = -cloud.radius * 2;
+        });
+        
+        spikes.forEach(spike => {
+            if (spike.speedX) {
+                spike.x += spike.speedX;
+                if ((spike.speedX > 0 && spike.x > spike.bounds.right) || (spike.speedX < 0 && spike.x < spike.bounds.left)) {
+                    spike.speedX *= -1;
+                }
+            }
+        });
+
+        platforms.forEach(p => {
+            const speedX = p.speedX || 0;
+            const speedY = p.speedY || 0;
+            if (speedX !== 0 && p.bounds) {
+                p.x += speedX;
+                if ((speedX > 0 && p.x + p.width > p.bounds.right) || (speedX < 0 && p.x < p.bounds.left)) p.speedX *= -1;
+            }
+            if (speedY !== 0 && p.bounds) {
+                p.y += speedY;
+                 if ((speedY > 0 && p.y + p.height > p.bounds.bottom) || (speedY < 0 && p.y < p.bounds.top)) p.speedY *= -1;
+            }
+
+            // Lógica de colisão com plataformas
+            if (jumper.x + jumper.radius > p.x && jumper.x - jumper.radius < p.x + p.width) {
+                 // Estava acima da plataforma no frame anterior e agora está abaixo do topo da plataforma.
+                if (jumper.dy >= 0 && (jumper.y - jumper.dy + jumper.radius) <= p.y) {
+                     if (jumper.y + jumper.radius >= p.y) {
+                        jumper.onGround = true;
+                        jumper.y = p.y - jumper.radius;
+
+                        if (!wasOnGround) {
+                             const fallSpeed = jumper.dy;
+                             if (fallSpeed > gravity * 2) { 
+                                jumper.squashFactor = 1.3;
+                             }
+                        }
+
+                        if (!jumper.isCharging && jumper.dx === 0) {
+                             // Pulo de espera suave
+                             const idleBounceForce = -3.5;
+                             jumper.dy = idleBounceForce;
+                        } else {
+                            jumper.dy = 0;
+                        }
+                        
+                        jumper.x += speedX;
+                    }
+                } 
+                // Colisão com a parte de baixo
+                else if (jumper.dy < 0 && jumper.y - jumper.radius < p.y + p.height && jumper.y + jumper.radius > p.y) {
+                     jumper.y = p.y + p.height + jumper.radius;
+                     jumper.dy *= -0.5;
+                }
+            }
+        });
+        
+        if (jumper.isCharging) {
+            jumper.squashFactor = 0.6;
+        } else {
+             // Retorno suave ao normal (removendo o achatamento do pulo parado)
+             if (jumper.squashFactor > 1 && !jumper.onGround) {
+                 jumper.squashFactor -= 0.05;
+             } else if (jumper.squashFactor < 1) {
+                 jumper.squashFactor += 0.05;
+             }
+             // Stretch no ar
+             if (!jumper.onGround) {
+                jumper.squashFactor = 0.9;
+             }
+        }
+        
+        if (jumper.onGround && Math.abs(jumper.dx) > 0 && Math.random() > 0.6) {
+            particles.push({
+                x: jumper.x,
+                y: jumper.y + jumper.radius,
+                size: Math.random() * 4 + 2,
+                life: 30,
+                opacity: 0.4,
+                speedX: -jumper.dx * (Math.random() * 0.1),
+                speedY: -(Math.random() * 0.5 + 0.2),
+                fadeRate: 0.015
+            });
+        }
+        
+        seagulls.forEach(seagull => {
+            seagull.x += seagull.speed;
+            if (seagull.speed < 0 && seagull.x + seagull.width < 0) {
+                seagull.x = canvas.width;
+            } else if (seagull.speed > 0 && seagull.x > canvas.width) {
+                seagull.x = -seagull.width;
+            }
+            const dist = Math.hypot(jumper.x - (seagull.x + seagull.width / 2), jumper.y - seagull.y);
+            if (dist < jumper.radius + seagull.height / 2) {
+                handleHit();
+            }
+        });
+
+
+        if (jumper.x - jumper.radius > canvas.width) jumper.x = -jumper.radius;
+        else if (jumper.x + jumper.radius < 0) jumper.x = canvas.width + jumper.radius;
+        if (jumper.y - jumper.radius > canvas.height) handleHit();
+        if (jumper.y - jumper.radius < 0 && !jumper.onGround) {
+            jumper.y = jumper.radius;
+            jumper.dy *= -bounceFactor;
+        }
+
+        if (jumper.isCharging && jumper.onGround) {
+            if (jumper.chargePower < maxChargePower) {
+                jumper.chargePower += 0.5;
+            }
+        }
+        
+        if (!levelState.hasKey) {
+            const dist = Math.hypot(jumper.x - levelState.keyPos.x, jumper.y - levelState.keyPos.y);
+            if (dist < jumper.radius + 15) levelState.hasKey = true;
+        }
+        if (!levelState.lifeCollected) {
+            const dist = Math.hypot(jumper.x - levelState.lifePos.x, jumper.y - levelState.lifePos.y);
+            if (dist < jumper.radius + 15) {
+                levelState.lifeCollected = true;
+                jumper.lives++;
+            }
+        }
+        
+        spikes.forEach(spike => {
+            const collisionY = (spike.from === 'ceiling') ? 0 : (spike.y || 0);
+            if (jumper.x + jumper.radius > spike.x && jumper.x - jumper.radius < spike.x + spike.width &&
+                jumper.y + jumper.radius > collisionY && jumper.y - jumper.radius < collisionY + spike.height) {
+                handleHit();
+            }
+        });
+        
+        if (levelState.hasKey && jumper.x + jumper.radius > goal.x && jumper.x - jumper.radius < goal.x + goal.width &&
+            jumper.y + jumper.radius > goal.y && jumper.y - jumper.radius < goal.y + goal.height) {
+            level++;
+            loadLevel(level);
+        }
+    }
+
+    function handleHit() {
+        jumper.lives--;
+        if (jumper.lives <= 0) gameOver = true;
+        else loadLevel(level);
+    }
+
+    function resetGame() {
+        gameOver = false;
+        gameWon = false;
+        jumper.lives = 3;
+        level = 1;
+        sunY = 150;
+        loadLevel(level);
+    }
+    
+    function gameLoop() {
+        requestAnimationFrame(gameLoop);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        drawBackground();
+        drawPlatforms();
+        drawSpikes();
+        drawSeagulls();
+        drawGoal();
+        drawKey();
+        drawLife();
+        drawParticles();
+        drawJumper();
+        
+        if (!gameOver && !gameWon) {
+            update();
+            drawUI();
+        } else if (gameOver) {
+            drawEndScreen('FIM DE JOGO', '#e94560');
+        } else if (gameWon) {
+            drawEndScreen('VOCÊ VENCEU!', '#2de2e6');
+        }
+    }
+
+    // --- EVENTOS DE CONTROLE ---
+    
+    function executeJump() {
+        if (!jumper.isCharging) return;
+
+        // Fumaça Ilustrativa ao Soltar o Pulo
+        const particleCount = 10 + Math.floor(jumper.chargePower * 0.8);
+        for (let i = 0; i < particleCount; i++) {
+            const angle = Math.PI + Math.random() * Math.PI; // Semicírculo para cima
+            const speed = 1 + (Math.random() * jumper.chargePower / 10);
+            particles.push({
+                x: jumper.x,
+                y: jumper.y + jumper.radius, // Origem nos pés
+                size: Math.random() * 5 + 3,
+                life: 50 + Math.random() * 20,
+                opacity: 0.6,
+                speedX: Math.cos(angle) * speed,
+                speedY: Math.sin(angle) * speed,
+                fadeRate: 0.02
+            });
+        }
+
+        jumper.dy = minJumpForce - jumper.chargePower;
+        jumper.onGround = false;
+        jumper.isCharging = false;
+        jumper.chargePower = 0;
+        jumper.squashFactor = 0.8;
+    }
+    
+    function keyDownHandler(e) {
+        if (e.key === 'Right' || e.key === 'ArrowRight') keys.right = true;
+        else if (e.key === 'Left' || e.key === 'ArrowLeft') keys.left = true;
+        else if (e.code === 'Space') keys.space = true;
+        else if (e.key === 'Enter' && (gameOver || gameWon)) resetGame();
+    }
+
+    function keyUpHandler(e) {
+        if (e.key === 'Right' || e.key === 'ArrowRight') keys.right = false;
+        else if (e.key === 'Left' || e.key === 'ArrowLeft') keys.left = false;
+        else if (e.code === 'Space') {
+            keys.space = false;
+            if(jumper.isCharging) executeJump();
+            jumper.isCharging = false;
+        }
+    }
+
+    document.addEventListener('keydown', keyDownHandler);
+    document.addEventListener('keyup', keyUpHandler);
+
+    initClouds();
+    loadLevel(level);
+    gameLoop();
+
+</script>
+
+</body>
+</html>
+
+
